@@ -17,8 +17,10 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -41,13 +44,15 @@ class OverlayClickGUI : OverlayWindow() {
             flags =
                 flags or WindowManager.LayoutParams.FLAG_BLUR_BEHIND or WindowManager.LayoutParams.FLAG_DIM_BEHIND
             if (Build.VERSION.SDK_INT >= 31) {
-                blurBehindRadius = 15
+                // Увеличили размытие для более мягкого и красивого эффекта матового стекла
+                blurBehindRadius = 25 
             }
 
             layoutInDisplayCutoutMode =
                 WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
 
-            dimAmount = 0.4f
+            // Сделали фон чуть темнее (было 0.4f, стало 0.6f) для фокуса на чите
+            dimAmount = 0.6f 
             windowAnimations = android.R.style.Animation_Dialog
             width = WindowManager.LayoutParams.MATCH_PARENT
             height = WindowManager.LayoutParams.MATCH_PARENT
@@ -59,57 +64,79 @@ class OverlayClickGUI : OverlayWindow() {
 
     private var selectedModuleCategory by mutableStateOf(ModuleCategory.Combat)
 
+    // Создаем свою собственную красивую темную палитру
+    private val CustomCheatColorScheme = darkColorScheme(
+        surface = Color(0xFF121318),          // Очень глубокий темно-серый фон окна
+        surfaceContainer = Color(0xFF1A1B22), // Цвет контента внутри вкладок
+        primary = Color(0xFFBB86FC),          // Неоновый фиолетовый для активных иконок
+        onSurface = Color(0xFFE3E2E6),        // Белый/светло-серый текст
+        onSurfaceVariant = Color(0xFFA4A3A9)  // Приглушенный цвет для неактивных иконок
+    )
+
     @Composable
     override fun Content() {
-        Column(
-            Modifier
-                .fillMaxSize()
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) {
-                    OverlayManager.dismissOverlayWindow(this)
-                },
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            ElevatedCard(
-                shape = MaterialTheme.shapes.medium,
-                modifier = Modifier
-                    .padding(40.dp)
+        // Оборачиваем всё в нашу кастомную тему
+        MaterialTheme(colorScheme = CustomCheatColorScheme) {
+            Column(
+                Modifier
                     .fillMaxSize()
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
-                    ) {}
-            ) {
-                Row(Modifier.fillMaxSize()) {
-                    NavigationRailX(
-                        windowInsets = WindowInsets(0, 0, 0, 0)
                     ) {
-                        ModuleCategory.entries.fastForEach { moduleCategory ->
-                            NavigationRailItem(
-                                selected = selectedModuleCategory === moduleCategory,
-                                onClick = {
-                                    if (selectedModuleCategory !== moduleCategory) {
-                                        selectedModuleCategory = moduleCategory
-                                    }
-                                },
-                                icon = {
-                                    Icon(
-                                        painterResource(moduleCategory.iconResId),
-                                        contentDescription = null
+                        OverlayManager.dismissOverlayWindow(this)
+                    },
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                ElevatedCard(
+                    shape = MaterialTheme.shapes.large, // Сделали закругления углов чуть больше и мягче
+                    modifier = Modifier
+                        .padding(16.dp) // Уменьшили отступы от краев экрана, чтобы меню стало больше
+                        .fillMaxSize()
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {}
+                ) {
+                    Row(Modifier.fillMaxSize()) {
+                        NavigationRailX(
+                            windowInsets = WindowInsets(0, 0, 0, 0),
+                            modifier = Modifier.background(MaterialTheme.colorScheme.surface)
+                        ) {
+                            ModuleCategory.entries.fastForEach { moduleCategory ->
+                                val isSelected = selectedModuleCategory === moduleCategory
+                                NavigationRailItem(
+                                    selected = isSelected,
+                                    onClick = {
+                                        if (selectedModuleCategory !== moduleCategory) {
+                                            selectedModuleCategory = moduleCategory
+                                        }
+                                    },
+                                    icon = {
+                                        Icon(
+                                            painterResource(moduleCategory.iconResId),
+                                            contentDescription = null
+                                        )
+                                    },
+                                    label = {
+                                        Text(stringResource(moduleCategory.labelResId))
+                                    },
+                                    alwaysShowLabel = false,
+                                    // Принудительно красим элементы меню в наши неоновые цвета
+                                    colors = NavigationRailItemDefaults.colors(
+                                        selectedIconColor = MaterialTheme.colorScheme.primary,
+                                        selectedTextColor = MaterialTheme.colorScheme.primary,
+                                        indicatorColor = Color(027, 021, 044, 0x33), // Едва заметный фиолетовый блик вокруг активной иконки
+                                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
-                                },
-                                label = {
-                                    Text(stringResource(moduleCategory.labelResId))
-                                },
-                                alwaysShowLabel = false
-                            )
+                                )
+                            }
                         }
+                        VerticalDivider(color = Color(0xFF2D2F39)) // Стильный темный разделитель между боковым меню и читами
+                        DialogContent()
                     }
-                    VerticalDivider()
-                    DialogContent()
                 }
             }
         }
@@ -129,5 +156,4 @@ class OverlayClickGUI : OverlayWindow() {
             }
         }
     }
-
 }
