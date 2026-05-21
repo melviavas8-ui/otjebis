@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name" translatable="false">NeCute Client</string>
     <string name="home">主页</string>
     <string name="what_is_this">这是什么？</string>
-    <string name="introduction">MuCuteClient 是一款使用 MITM 技术实现的 Minecraft Bedrock 插件，提供各种实用功能，而无需修改游戏内存。</string>
+    <string name="introduction">NeCuteClient 是一款使用 MITM 技术实现的 Minecraft Bedrock 插件，提供各种实用功能，而无需修改游戏内存。</string>
+    <string name="backend" translatable="false">NeCuteRelay</string>
     <string name="backend_introduction">简单几步实现 MITM 攻击。</string>
+    <string name="minecraft" translatable="false">Minecraft</string>
     <string name="recommended_version">推荐版本：%s</string>
     <string name="capturing_game_packets">正在捕获游戏数据包...</string>
     <string name="stop">停止</string>
@@ -17,9 +20,9 @@
     <string name="server_port">服务器端口</string>
     <string name="tips">提示</string>
     <string name="change_game_settings_tip">你需要先断开连接才能更改游戏设置。</string>
-    <string name="backend_connected">已连接 MuCuteRelay</string>
+    <string name="backend_connected">已连接 NeCuteRelay</string>
     <string name="start_game">启动游戏</string>
-    <string name="backend_disconnected">已断开 MuCuteRelay</string>
+    <string name="backend_disconnected">已断开 NeCuteRelay</string>
     <string name="select_game">选择游戏</string>
     <string name="no_game_selected">未选择游戏</string>
     <string name="game_selector">游戏选择器</string>
@@ -49,8 +52,8 @@
     <string name="overlay_icon_description">更改浮动按钮图标</string>
     <string name="overlay_opacity_settings">不透明度设置</string>
     <string name="overlay_opacity_description">调整叠加层和快捷按钮的透明度</string>
-    <string name="overlay_border_color">Цвет границы наложения</string>
-    <string name="overlay_border_color_description">Изменить цвет границы плавающей кнопки</string>
+    <string name="overlay_border_color">悬浮窗边框颜色</string>
+    <string name="overlay_border_color_description">更改浮动按钮的边框颜色</string>
     <string name="request_ignore_battery_optimization">我们需要忽略电池优化以保持连接</string>
     <string name="ignore_battery_optimization_denied">忽略电池优化权限被拒绝</string>
     <string name="shortcut">快捷方式</string>
