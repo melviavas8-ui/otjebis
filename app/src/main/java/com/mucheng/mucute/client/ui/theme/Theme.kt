@@ -1,34 +1,29 @@
 package com.mucheng.mucute.client.ui.theme
 
-import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
 
-private val DarkColorScheme = darkColorScheme()
-
-private val LightColorScheme = lightColorScheme()
+// Наша кастомная неоново-тёмная палитра
+private val DarkColorScheme = darkColorScheme(
+    primary = Color(0xFFBB86FC),          // Неоновый фиолетовый акцент (кнопки, иконки, ползунки)
+    onPrimary = Color(0xFF121318),        // Цвет текста на фиолетовых элементах
+    surface = Color(0xFF121318),          // Глубокий тёмный фон самого окна меню
+    onSurface = Color(0xFFE3E2E6),        // Основной белый/светло-серый текст
+    surfaceContainer = Color(0xFF1A1B22), // Чуть более светлый фон для контента внутри вкладок
+    onSurfaceVariant = Color(0xFFA4A3A9), // Цвет для неактивных/выключенных кнопок
+    outline = Color(0xFF2D2F39)           // Цвет стильных разделителей и рамок
+)
 
 @Composable
 fun MuCuteClientTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = true, // Принудительно включаем тёмную тему всегда
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
+    // Используем только нашу крутую тёмную схему, игнорируя стандартные цвета Android
+    val colorScheme = DarkColorScheme
 
     MaterialTheme(
         colorScheme = colorScheme,
