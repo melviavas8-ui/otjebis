@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.RectF
 import com.mucheng.mucute.client.game.InterceptablePacket
 import com.mucheng.mucute.client.game.Module
 import com.mucheng.mucute.client.game.ModuleCategory
@@ -25,32 +26,28 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
         }
     }
 
-    // Basic settings
     private val fov by floatValue("fov", 110f, 40f..110f)
-    private val strokeWidth by floatValue("stroke_width", 2f, 1f..10f)
-    private val colorRed by intValue("color_red", 255, 0..255)
-    private val colorGreen by intValue("color_green", 0, 0..255)
-    private val colorBlue by intValue("color_blue", 0, 0..255)
+    private val strokeWidth by floatValue("stroke_width", 2.5f, 1f..10f)
+    
+    // RGB цвета оставляем для совместимости с меню настроек
+    private val colorRed by intValue("color_red", 187, 0..255)
+    private val colorGreen by intValue("color_green", 134, 0..255)
+    private val colorBlue by intValue("color_blue", 252, 0..255)
 
-    // Display options
     private val showAllEntities by boolValue("show_all_entities", false)
     private val showDistance by boolValue("show_distance", true)
     private val showNames by boolValue("show_names", true)
 
-    // Box style options
-    private val use2DBox by boolValue("2d_box", false)
-    private val use3DBox by boolValue("3d_box", true)
+    private val use2DBox by boolValue("2d_box", true) // Ставим 2D бокс дефолтным для лучшего FPS
+    private val use3DBox by boolValue("3d_box", false)
     private val useCornerBox by boolValue("corner_box", false)
 
-    // Tracer options
     private val tracers by boolValue("tracers", false)
     private val tracerBottom by boolValue("tracer_bottom", true)
     private val tracerTop by boolValue("tracer_top", false)
     private val tracerCenter by boolValue("tracer_center", false)
 
-    override fun beforePacketBound(interceptablePacket: InterceptablePacket) {
-        // ESP doesn't need to intercept packets
-    }
+    override fun beforePacketBound(interceptablePacket: InterceptablePacket) {}
 
     override fun onEnabled() {
         super.onEnabled()
@@ -90,7 +87,7 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
 
     private fun getEntityBoxVertices(entity: Entity): Array<Vector3f> {
         val width = 0.6f
-        val height = 1.8f // Standard player/entity height
+        val height = 1.8f
 
         val pos = entity.vec3Position
         val halfWidth = width / 2f
@@ -102,14 +99,14 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
         }
 
         return arrayOf(
-            Vector3f.from(pos.x - halfWidth, yPos, pos.z - halfWidth),          // Bottom front left
-            Vector3f.from(pos.x - halfWidth, yPos + height, pos.z - halfWidth), // Top front left
-            Vector3f.from(pos.x + halfWidth, yPos + height, pos.z - halfWidth), // Top front right
-            Vector3f.from(pos.x + halfWidth, yPos, pos.z - halfWidth),          // Bottom front right
-            Vector3f.from(pos.x - halfWidth, yPos, pos.z + halfWidth),          // Bottom back left
-            Vector3f.from(pos.x - halfWidth, yPos + height, pos.z + halfWidth), // Top back left
-            Vector3f.from(pos.x + halfWidth, yPos + height, pos.z + halfWidth), // Top back right
-            Vector3f.from(pos.x + halfWidth, yPos, pos.z + halfWidth)           // Bottom back right
+            Vector3f.from(pos.x - halfWidth, yPos, pos.z - halfWidth),
+            Vector3f.from(pos.x - halfWidth, yPos + height, pos.z - halfWidth),
+            Vector3f.from(pos.x + halfWidth, yPos + height, pos.z - halfWidth),
+            Vector3f.from(pos.x + halfWidth, yPos, pos.z - halfWidth),
+            Vector3f.from(pos.x - halfWidth, yPos, pos.z + halfWidth),
+            Vector3f.from(pos.x - halfWidth, yPos + height, pos.z + halfWidth),
+            Vector3f.from(pos.x + halfWidth, yPos + height, pos.z + halfWidth),
+            Vector3f.from(pos.x + halfWidth, yPos, pos.z + halfWidth)
         )
     }
 
@@ -143,7 +140,7 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
     }
 
     fun render(canvas: Canvas) {
-        if (!isEnabled || !isSessionCreated) return  // isSessionCreated check
+        if (!isEnabled || !isSessionCreated) return
 
         val player = session.localPlayer
         val entities = if (showAllEntities) {
@@ -157,6 +154,7 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
         val screenWidth = canvas.width
         val screenHeight = canvas.height
 
+        // Оптимизация: Считаем матрицу один раз за кадр, а не внутри цикла для каждого игрока
         val viewProjMatrix = Matrix4f.createPerspective(fov,
             screenWidth.toFloat() / screenHeight, 0.1f, 128f)
             .mul(Matrix4f.createTranslation(player.vec3Position)
@@ -168,6 +166,7 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
             style = Paint.Style.STROKE
             strokeWidth = this@ESPModule.strokeWidth
             color = Color.rgb(colorRed, colorGreen, colorBlue)
+            isAntiAlias = true
         }
 
         entities.forEach { entity ->
@@ -216,6 +215,21 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
 
     private fun draw2DBox(canvas: Canvas, paint: Paint, minX: Double, minY: Double, maxX: Double, maxY: Double) {
         val padding = paint.strokeWidth / 2
+        
+        // Рисуем контрастную черную обводку (Outline), чтобы боксы выделялись на любом фоне
+        val outlinePaint = Paint(paint).apply {
+            color = Color.BLACK
+            strokeWidth = paint.strokeWidth + 2f
+        }
+        canvas.drawRect(
+            minX.toFloat() + padding,
+            minY.toFloat() + padding,
+            maxX.toFloat() - padding,
+            maxY.toFloat() - padding,
+            outlinePaint
+        )
+        
+        // Рисуем основной цветной бокс поверх обводки
         canvas.drawRect(
             minX.toFloat() + padding,
             minY.toFloat() + padding,
@@ -229,9 +243,9 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
         if (screenPositions.size < 8) return
 
         val edges = listOf(
-            0 to 1, 1 to 2, 2 to 3, 3 to 0,  // Front face
-            4 to 5, 5 to 6, 6 to 7, 7 to 4,  // Back face
-            0 to 4, 1 to 5, 2 to 6, 3 to 7   // Connecting edges
+            0 to 1, 1 to 2, 2 to 3, 3 to 0,
+            4 to 5, 5 to 6, 6 to 7, 7 to 4,
+            0 to 4, 1 to 5, 2 to 6, 3 to 7
         )
 
         edges.forEach { (start, end) ->
@@ -239,7 +253,6 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
             val endPos = screenPositions[end]
 
             if (isOnScreen(startPos, canvas) && isOnScreen(endPos, canvas)) {
-                //slight padding
                 val padding = paint.strokeWidth / 2
                 canvas.drawLine(
                     startPos.x.coerceIn(padding, canvas.width - padding),
@@ -269,7 +282,6 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
         corners.forEachIndexed { i, (x, y) ->
             val nextCorner = corners[(i + 1) % 4]
 
-            // Horizontal lines
             canvas.drawLine(
                 x.toFloat(),
                 y.toFloat(),
@@ -278,7 +290,6 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
                 paint
             )
 
-            // Vertical lines
             canvas.drawLine(
                 x.toFloat(),
                 y.toFloat(),
@@ -287,7 +298,6 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
                 paint
             )
 
-            // Connect to next corner
             canvas.drawLine(
                 x.toFloat() + if (i % 2 == 0) cornerLength else -cornerLength,
                 y.toFloat(),
@@ -320,24 +330,22 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
 
     @SuppressLint("DefaultLocale")
     private fun drawEntityInfo(canvas: Canvas, paint: Paint, entity: Entity, minX: Double, minY: Double, maxX: Double) {
-        // Background paint for text
         val bgPaint = Paint().apply {
-            color = Color.argb(160, 0, 0, 0) // Semi-transparent black background
+            color = Color.argb(180, 20, 20, 25) // Темная аккуратная плашка под текст
             style = Paint.Style.FILL
         }
 
-        // Outline paint
         val outlinePaint = Paint().apply {
             color = Color.BLACK
-            textSize = 30f
+            textSize = 28f
             textAlign = Paint.Align.CENTER
             style = Paint.Style.STROKE
-            strokeWidth = 4f // Thick outline
+            strokeWidth = 3f
         }
 
         val textPaint = Paint().apply {
-            color = paint.color
-            textSize = 30f
+            color = Color.WHITE // Делаем текст белым, чтобы он лучше читался
+            textSize = 28f
             textAlign = Paint.Align.CENTER
             style = Paint.Style.FILL
         }
@@ -347,29 +355,28 @@ class ESPModule : Module("esp", ModuleCategory.Visual) {
                 append(entity.username)
             }
             if (showDistance) {
-                if (isNotEmpty()) append(" | ")
+                if (isNotEmpty()) append(" [")
                 val distance = entity.vec3Position.distance(session.localPlayer.vec3Position)
-                append("${String.format("%.1f", distance)}m")
+                append("${String.format("%.1f", distance)}m]")
             }
         }
 
         val textX = (minX + maxX).toFloat() / 2
-        val textY = minY.toFloat() - 10
+        val textY = minY.toFloat() - 12
 
         val bounds = android.graphics.Rect()
         textPaint.getTextBounds(info, 0, info.length, bounds)
 
-        val padding = 8f
-        val bgRect = android.graphics.RectF(
+        val padding = 6f
+        val bgRect = RectF(
             textX - bounds.width() / 2 - padding,
             textY - bounds.height() - padding,
             textX + bounds.width() / 2 + padding,
             textY + padding
         )
-        canvas.drawRoundRect(bgRect, 4f, 4f, bgPaint)
+        canvas.drawRoundRect(bgRect, 6f, 6f, bgPaint)
 
         canvas.drawText(info, textX, textY, outlinePaint)
-
         canvas.drawText(info, textX, textY, textPaint)
     }
 }
