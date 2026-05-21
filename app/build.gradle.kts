@@ -1,4 +1,4 @@
-import org.jetbrains.kotlin.compose.compiler.gradle.ComposeFeatureFlag
+Import org.jetbrains.kotlin.compose.compiler.gradle.ComposeFeatureFlag
 
 plugins {
     alias(libs.plugins.android.application)
@@ -9,11 +9,13 @@ plugins {
 }
 
 android {
-    namespace = "com.mucheng.mucute.client"
+    // 1. Поменяли внутреннее имя пакета для сборки
+    namespace = "com.melviavas.necute.client"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.mucheng.mucute.client"
+        // 2. Поменяли уникальный ID приложения (теперь оно установится отдельной игрой)
+        applicationId = "com.melviavas.necute.client"
         minSdk = 28
         //noinspection EditedTargetSdkVersion
         targetSdk = 35
